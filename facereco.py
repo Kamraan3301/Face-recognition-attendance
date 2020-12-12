@@ -36,7 +36,7 @@ import os
 from datetime import datetime
 # from PIL import ImageGrab
  
-path = 'ImagesAttendance'
+path = '/home/kamran/paidprojectopencv/ml-project/Images'
 images = []
 classNames = []
 myList = os.listdir(path)
@@ -55,15 +55,26 @@ def findEncodings(images):
         encodeList.append(encode)
     return encodeList
 
-        
+def markAttendance(name):
+     with open('/home/kamran/paidprojectopencv/ml-project/Attendence.csv','r+') as f:
+        myDataList = f.readlines()
+        nameList = []
+        for line in myDataList:
+            entry = line.split(',')
+            nameList.append(entry[0])
+        if name not in nameList:
+            now = datetime.now()
+            dtString = now.strftime('%H:%M:%S')
+            f.writelines(f'\n{name},{dtString}')
+
+
+
 n=findEncodings(images)
 print(len(n))
-
 cap = cv2.VideoCapture(0)
 
 while True:
     success, img = cap.read()
-    # img = captureScreen()
     imgS = cv2.resize(img,(0,0),None,0.25,0.25)
     imgS = cv2.cvtColor(imgS, cv2.COLOR_BGR2RGB)
     
@@ -72,11 +83,46 @@ while True:
     
     
     for encodeFace,faceLoc in zip(encodesCurFrame,facesCurFrame):
-        matches = face_recognition.compare_faces(n,encodeFace)
-        faceDis = face_recognition.face_distance(encodeListKnown,encodeFace)
-        print(faceDis)
+        comparing_face = face_recognition.compare_faces(n,encodeFace)
+        facesimilrities = face_recognition.face_distance(n,encodeFace)
+        # print(facesimilrities)
+        matchIndex= np.argmin(facesimilrities)
+        ooaa=min(facesimilrities)*100
+
+        
+        ooaa=100-(ooaa)+20
+        ooaa=round(ooaa,2)
+        oopp=[]
+        oopp.append(ooaa)
+        # print(oopp)
+        ox=''.join(map(str,oopp))
+
+        if comparing_face [matchIndex]:
+            name= classNames[matchIndex].upper()
+            
+            print(name)  
+            y1,x2,y2,x1 = faceLoc
+            y1, x2, y2, x1 = y1*4,x2*4,y2*4,x1*4
+            cv2.rectangle(img,(x1,y1),(x2,y2),(0,255,0),2)
+            cv2.rectangle(img,(x1,y2),(x2,y2),(0,255,0),cv2.FILLED)
+            cv2.putText(img,name,(x1-6,y2+20),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+            cv2.putText(img,ox,(x2-6,y2+20),cv2.FONT_HERSHEY_COMPLEX,1,(255,255,255),2)
+            markAttendance(name)
+
+    cv2.imshow('webcam',img)
+    cv2.waitKey(1)
 
 
 
-
+##csv er entry with cam 0
+#csv er exit with cam 1
+##csv concatenate
+##make functions for FLASK
+##route reg and log deploy
+## deploy csv btn conn with sql
+##csv cal
+##csv edit access through admin
+##all route
+##frontend visualization
+##Extras will be added later
 
